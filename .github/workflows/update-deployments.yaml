@@ -8,7 +8,6 @@ jobs:
   update-dep:
     name: Update dependent repo
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'testbot' }}
     steps:
       - name: Checkout ${{ github.repository }}
         uses: actions/checkout@v2
