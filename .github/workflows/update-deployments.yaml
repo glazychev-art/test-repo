@@ -1,0 +1,48 @@
+---
+name: Update dep reposiotry
+on:
+  push:
+    branches:
+      - main
+jobs:
+  update-dep:
+    name: Update dependent repo
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'testbot' }}
+    steps:
+      - name: Checkout ${{ github.repository }}
+        uses: actions/checkout@v2
+        with:
+          path: ${{ github.repository }}
+          repository: ${{ github.repository }}
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+      - uses: benjlevesque/short-sha@v1.2
+        id: short-sha
+        with:
+          length: 7
+      - name: Checkout networkservicemesh/test-dep-repo
+        uses: actions/checkout@v2
+        with:
+          path: glazychev-art/test-dep-repo
+          repository: glazychev-art/test-dep-repo
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
+      - name: Add new file
+        working-directory: glazychev-art/test-dep-repo
+        run: |
+          touch ${{ github.sha }}
+          echo "---" >> ${{ github.sha }}
+          git add -- .
+      - name: Push update to the test-dep-repo
+        working-directory: glazychev-art/test-dep-repo
+        run: |
+          echo Starting to update repositotry test-dep-repo
+          git add -- .
+          if ! [ -n "$(git diff --cached --exit-code)" ]; then
+            echo Repository already up to date
+            exit 0;
+          fi
+          git config --global user.email "test@test.com"
+          git config --global user.name "testbot"
+          git commit -s -m "Update repo"
+          git checkout -b update/${{ github.repository }}
+          git push -f origin update/${{ github.repository }}
