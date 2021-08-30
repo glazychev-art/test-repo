@@ -40,8 +40,8 @@ jobs:
             echo Repository already up to date
             exit 0;
           fi
-          git config --global user.email "test@test.com"
-          git config --global user.name "testbot"
+          git config --global user.email "nsmbot@networkservicmesh.io"
+          git config --global user.name "NSMBot"
           git commit -s -m "Update repo"
           git checkout -b update/${{ github.repository }}
           git push -f origin update/${{ github.repository }}
