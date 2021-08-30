@@ -5,6 +5,15 @@ on:
     branches:
       - main
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [[ "${{secrets.BOT_GITHUB_TOKEN}}" == "" ]]; then
+            echo The secret does not exist
+          else
+            echo The secret exists
+          fi
   update-dep:
     name: Update dependent repo
     runs-on: ubuntu-latest
