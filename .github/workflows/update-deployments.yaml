@@ -28,8 +28,6 @@ jobs:
       - name: Add new file
         working-directory: glazychev-art/test-dep-repo
         run: |
-          touch ${{ github.sha }}
-          echo "---" >> ${{ github.sha }}
           echo "12" >> 2.yaml
           git add -- .
       - name: Push update to the test-dep-repo
