@@ -1,0 +1,27 @@
+---
+name: push
+on:
+  push:
+    branches:
+      - main
+  workflow_run:
+    types:
+      - completed
+    workflows:
+      - 'automerge'
+jobs:
+  pushImage:
+    name: Push docker image
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DOCKER_USER: ${{ secrets.DOCKER_LOGIN }}
+      ORG: networkservicemeshci
+      CGO_ENABLED: 0
+      NAME: ${{ github.event.repository.name }}
+    if: ${{ github.repository != 'networkservicemesh/cmd-template' && (github.event.workflow_run.conclusion == 'success' && github.actor == 'nsmbot' || github.ref == 'refs/heads/main') }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
