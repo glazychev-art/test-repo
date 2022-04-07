@@ -7,6 +7,17 @@ on:
     workflows:
       - "ci"
 jobs:
+  job1:
+    name: job1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup envs
+        run: |
+          echo "github.repository ${{ github.repository }}"
+          echo "github.event.workflow_run.conclusion ${{ github.event.workflow_run.conclusion }}"
+          echo "github.event.workflow_run.head_branch ${{ github.event.workflow_run.head_branch }}"
+          echo "github.actor ${{ github.actor }}"
+          echo "github.ref ${{ github.ref }}"
   automerge:
     name: Automerge
     runs-on: ubuntu-latest
