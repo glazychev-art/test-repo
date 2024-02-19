@@ -28,6 +28,109 @@ jobs:
           echo "github.event_name ${{ github.event_name }}"
           echo "github.actor ${{ github.actor }}"
           echo "github.ref ${{ github.ref }}"
-      - uses: actions/checkout@v2
-      - name: shellcheck
-        uses: fkautz/shell-linter@v1.0.1
+#  run-macos-14:
+#    name: macos-14
+#    runs-on: macos-14
+#    steps:
+#      - name: Bash commands test
+#        run: |
+#          uname -a
+#      - name: Install docker
+#        run: |
+#          brew install qemu
+#          cat >entitlements.xml <<EOF
+#          <?xml version="1.0" encoding="UTF-8"?>
+#          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+#          <plist version="1.0">
+#          <dict>
+#          <key>com.apple.security.hypervisor</key>
+#          <true/>
+#          </dict>
+#          </plist>
+#          EOF
+#          codesign --sign - --entitlements entitlements.xml --force /usr/local/bin/qemu-system-$(uname -m | sed -e s/arm64/aarch64/)
+#          brew install docker
+#          brew install colima
+#          colima start
+#          docker ps
+#  run-macos-14-2:
+#    name: macos-14
+#    runs-on: macos-14
+#    steps:
+#      - name: Bash commands test
+#        run: |
+#          uname -a
+#      - name: Install Docker
+#        run: |
+#          brew install --cask docker
+#
+#      - name: Start Docker
+#        run: |
+#          # Start Docker.app if not already running
+#          if ! pgrep -f Docker.app; then
+#          open -a /Applications/Docker.app
+#          # Wait for Docker to be ready
+#          while ! docker info >/dev/null 2>&1; do sleep 1; done
+#          fi
+#          docker ps
+
+#  run-macos-14-3:
+#    name: macos-14
+#    runs-on: macos-14
+#    steps:
+#      - name: Set up QEMU
+#        uses: docker/setup-qemu-action@v2
+#        with:
+#          platforms: 'arm64,arm'
+#      - name: Set up Docker
+#        uses: crazy-max/ghaction-setup-docker@v3
+#      - name: Bash commands test
+#        run: |
+#          docker ps
+
+#  run-macos-14-4:
+#    name: macos-14
+#    runs-on: macos-14
+#    steps:
+#      - name: Bash commands test
+#        run: |
+#          brew update-reset && brew update
+#          brew install --cask docker
+#          curl -o ./VirtualBox.dmg https://download.virtualbox.org/virtualbox/7.0.8/VirtualBox-7.0.8_BETA4-156879-macOSArm64.dmg
+#          sudo hdiutil attach ./VirtualBox.dmg
+#          ls /Volumes/VirtualBox/
+#          sudo installer -verbose -pkg /Volumes/VirtualBox/VirtualBox.pkg -target ~
+#          sudo hdiutil unmount /Volumes/VirtualBox
+#          brew install docker-machine
+#          docker-machine create default --virtualbox-no-vtx-check
+
+  job1:
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if ${{ contains(github.event.workflow_run.head_branch, 'release/') }}; then
+            echo "matrix={\"config\":[                                \
+            {\"node_type\":\"n3.xlarge.x86\",\"CNI\":\"default\"},    \
+            {\"node_type\":\"n3.xlarge.x86\",\"CNI\":\"calico-vpp\"}, \
+            {\"node_type\":\"c3.large.arm64\",\"CNI\":\"default\"}    \
+            ]}" >> $GITHUB_OUTPUT
+          else
+            echo "matrix={\"config\":[                                \
+            {\"node_type\":\"n3.xlarge.x86\",\"CNI\":\"default\"},    \
+            {\"node_type\":\"n3.xlarge.x86\",\"CNI\":\"calico-vpp\"}  \
+            ]}" >> $GITHUB_OUTPUT
+          fi
+  job2:
+    runs-on: ubuntu-latest
+    needs: job1
+    strategy:
+      matrix: ${{ fromJSON(needs.job1.outputs.matrix) }}
+    steps:
+      - name: Bash commands test
+        run: |
+          echo ${{ matrix.config.node_type }}
+          echo ${{ matrix.config.CNI }}
