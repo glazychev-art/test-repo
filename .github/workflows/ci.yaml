@@ -1,23 +1,38 @@
 ---
 name: ci
 on:
-  push:
-    branches:
-      - 'main'
-      - 'release/**'
   pull_request:
 jobs:
-  shellcheck:
-    name: shellcheck
+  update-dependent-repositories:
+    continue-on-error: true
+    name: Update cmd-forwarder-vpp
     runs-on: ubuntu-latest
     steps:
-      - name: Setup envs
+      - name: Checkout networkservicemesh/cmd-forwarder-vpp
+        uses: actions/checkout@v2
+        with:
+          path: networkservicemesh/cmd-forwarder-vpp
+          repository: networkservicemesh/cmd-forwarder-vpp
+      - name: Update cmd-forwarder-vpp locally
+        working-directory: networkservicemesh/cmd-forwarder-vpp
+        continue-on-error: true
         run: |
-          echo "github.repository ${{ github.repository }}"
-          echo "github.event.workflow_run.conclusion ${{ github.event.workflow_run.conclusion }}"
-          echo "github.event_name ${{ github.event_name }}"
-          echo "github.actor ${{ github.actor }}"
-          echo "github.ref ${{ github.ref }}"
-      - uses: actions/checkout@v2
-      - name: shellcheck
-        uses: fkautz/shell-linter@v1.0.1
+          set +e
+          has_dep=$(grep "github.com/networkservicemesh/govpp" go.mod | grep -v "// indirect" -c)
+          if [ "$has_dep" -eq 0 ]; then
+            echo "cmd-forwarder-vpp repo doesn't have govpp dependency"
+            exit 0
+          fi
+
+          go get -u github.com/networkservicemesh/govpp@main
+          go mod tidy
+          git diff
+      - name: Find and Replace version
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "VPP_VERSION=.*"
+          replace: "VPP_VERSION=123123123"
+      - name: Final check
+        working-directory: networkservicemesh/cmd-forwarder-vpp
+        run: |
+          git diff
